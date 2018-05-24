@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <head>
-    <title>myVue</title>
+    <title>simple-vue</title>
 </head>
 <style>
     #app {
@@ -20,11 +20,11 @@
 </body>
 
 <script>
-    function myVue(options) {
+    function myVueES5(options) {
         this._init(options);
     }
 
-    myVue.prototype._init = function (options) {
+    myVueES5.prototype._init = function (options) {
         //  将配置储存起来
         this.$options = options;
         //  挂靠目标
@@ -43,7 +43,7 @@
     }
 
     //  劫持属性重写getter，setter属性。数据更新时，调用更新方法。
-    myVue.prototype._obverse = function (obj) {
+    myVueES5.prototype._obverse = function (obj) {
         var that = this;
         Object.keys(obj).forEach(function (key) {
             if (obj.hasOwnProperty(key)) {
@@ -98,7 +98,7 @@
     }
 
     //  递归寻找符合指令要求的dom绑定模版语法
-    myVue.prototype._complie = function (root) {
+    myVueES5.prototype._complie = function (root) {
         var that = this;
         var nodes = root.children;
         //  一层一层递归寻找对应的标记来绑定对应的事件。
@@ -157,14 +157,14 @@
      * 观察者
      * @param name  指令名称，例如文本节点，该值设为"text"
      * @param el    指令对应的DOM元素
-     * @param vm    指令所属myVue实例
+     * @param vm    指令所属myVueES5实例
      * @param exp   指令对应的值，本例如"number"
      * @param attr  绑定的属性值，本例为"innerHTML"
      */
     function Watcher(name, el, vm, exp, attr) {
         this.name = name;         //    指令名称，例如文本节点，该值设为"text"
         this.el = el;             //    指令对应的DOM元素
-        this.vm = vm;             //    指令所属myVue实例
+        this.vm = vm;             //    指令所属myVueES5实例
         this.exp = exp;           //    指令对应的值，本例如"number"
         this.attr = attr;         //    绑定的属性值，本例为"innerHTML"
 
@@ -174,12 +174,15 @@
     //  更新方法
     Watcher.prototype.update = function () {
         //  el  模板语法绑定的DOM
-        //  this.attr   指令修改的attribute
+        //  attr   指令修改的attribute
+        //  vm  vue实例
+        //  exp vue实例属性
+        //  这里将 el(指令挂载的DOM，例如input,textarea)的attr（挂载的DOM的属性，例如value或者innerHTML）修改为vm（实例对象）的属性（exp）
         this.el[this.attr] = this.vm.$data[this.exp];
     }
 
     window.onload = function () {
-        window.app = new myVue({
+        window.app = new myVueES5({
             el: '#app',
             data: {
                 number: 0
@@ -191,5 +194,5 @@
             }
         })
     }
-    
+
 </script>
