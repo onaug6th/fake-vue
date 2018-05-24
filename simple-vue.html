@@ -29,14 +29,14 @@
         this.$options = options;
         //  挂靠目标
         this.$el = document.querySelector(options.el);
-        //  对象数据
+        //  内部数据
         this.$data = options.data;
         //  内部方法
         this.$methods = options.methods;
 
-        //  _binding保存着model与view的映射关系，也就是我们前面定义的Watcher的实例。当model改变时，我们会触发其中的指令类更新，保证view也能实时更新
+        //  _binding保存着model与view的映射关系，也就是我们前面定义的Watcher的实例。当model改变时，我们会触发其中的指令类更新，保证view也能实时更新。
         this._binding = {};
-        //  监测数据getter，setter
+        //  劫持数据getter，setter
         this._obverse(this.$data);
         //  对模板进行遍历，将符合要求的DOM绑定上指令
         this._complie(this.$el);
@@ -44,43 +44,50 @@
 
     //  劫持属性重写getter，setter属性。数据更新时，调用更新方法。
     myVue.prototype._obverse = function (obj) {
-        var _this = this;
+        var that = this;
         Object.keys(obj).forEach(function (key) {
             if (obj.hasOwnProperty(key)) {
                 /*
                  *  调度中心   
                  *  为该数据添加映射关系
                  *  this._binding = {
-                        key : {
+                        key的值 : {
                             _directives:[]   
                         }
                     }
                  * 
                  */
-                _this._binding[key] = {
+                that._binding[key] = {
                     _directives: []
                 };
-                console.log(_this._binding[key]);
+                //  值
                 var value = obj[key];
                 //  如果是对象，对内部数据再次遍历
                 if (typeof value === 'object') {
-                    _this._obverse(value);
+                    that._obverse(value);
                 }
-                var binding = _this._binding[key];
+                /**
+                 * binding = {
+                     _directives : []
+                 } 
+                 *
+                 */
+                var binding = that._binding[key];
                 //  对vue实例的data属性进行重写getter，setter
-                Object.defineProperty(_this.$data, key, {
+                Object.defineProperty(that.$data, key, {
                     enumerable: true,
                     configurable: true,
                     get: function () {
-                        console.log(`${key}获取${value}`);
+                        console.log(`属性名：“${key}”，getter获取为：“${value}”`);
                         return value;
                     },
                     set: function (newVal) {
-                        console.log(`${key}更新${newVal}`);
+                        console.log(`属性名：“${key}”，setter更新为：“${newVal}”`);
                         if (value !== newVal) {
                             value = newVal;
                             //  触发更新方法，更新视图
                             binding._directives.forEach(function (item) {
+                                //  循环调用该值绑定的watcher更新方法
                                 item.update();
                             })
                         }
@@ -92,7 +99,7 @@
 
     //  递归寻找符合指令要求的dom绑定模版语法
     myVue.prototype._complie = function (root) {
-        var _this = this;
+        var that = this;
         var nodes = root.children;
         //  一层一层递归寻找对应的标记来绑定对应的事件。
         for (var i = 0; i < nodes.length; i++) {
@@ -105,7 +112,7 @@
             if (node.hasAttribute('v-click')) {
                 node.onclick = (function () {
                     var attrVal = nodes[i].getAttribute('v-click');
-                    return _this.$methods[attrVal].bind(_this.$data);
+                    return that.$methods[attrVal].bind(that.$data);
                 })();
             }
             //  v-model
@@ -116,29 +123,29 @@
                     //  attrVal：存在data对象中的属性
                     var attrVal = node.getAttribute('v-model');
                     //  往回调函数队列中推入观察者函数
-                    _this._binding[attrVal]._directives.push(new Watcher(
+                    that._binding[attrVal]._directives.push(new Watcher(
                         'input',
                         node,
-                        _this,
+                        that,
                         attrVal,
                         'value'
-                    ))
-                    
+                    ));
+
                     //  将data对象中的属性，修改为节点的值
                     return function () {
-                        _this.$data[attrVal] = nodes[key].value;
+                        that.$data[attrVal] = nodes[key].value;
                     }
                 })(i));
             }
-            
+
             //  v-bind
             //  视图层绑定数据
             if (node.hasAttribute('v-bind')) {
                 var attrVal = node.getAttribute('v-bind');
-                _this._binding[attrVal]._directives.push(new Watcher(
+                that._binding[attrVal]._directives.push(new Watcher(
                     'text',
                     node,
-                    _this,
+                    that,
                     attrVal,
                     'innerHTML'
                 ))
@@ -148,18 +155,18 @@
 
     /**
      * 观察者
-     * @parma name 
-     * @parma el 
-     * @parma vm
-     * @parma exp
-     * @parma attr 
+     * @param name  指令名称，例如文本节点，该值设为"text"
+     * @param el    指令对应的DOM元素
+     * @param vm    指令所属myVue实例
+     * @param exp   指令对应的值，本例如"number"
+     * @param attr  绑定的属性值，本例为"innerHTML"
      */
     function Watcher(name, el, vm, exp, attr) {
-        this.name = name;         //指令名称，例如文本节点，该值设为"text"
-        this.el = el;             //指令对应的DOM元素
-        this.vm = vm;             //指令所属myVue实例
-        this.exp = exp;           //指令对应的值，本例如"number"
-        this.attr = attr;         //绑定的属性值，本例为"innerHTML"
+        this.name = name;         //    指令名称，例如文本节点，该值设为"text"
+        this.el = el;             //    指令对应的DOM元素
+        this.vm = vm;             //    指令所属myVue实例
+        this.exp = exp;           //    指令对应的值，本例如"number"
+        this.attr = attr;         //    绑定的属性值，本例为"innerHTML"
 
         this.update();
     }
@@ -184,4 +191,5 @@
             }
         })
     }
+    
 </script>
