@@ -78,11 +78,11 @@
                     enumerable: true,
                     configurable: true,
                     get: function () {
-                        console.log(`属性名：“${key}”，getter获取为：“${value}”`);
+                        console.log("属性名：" + key + "getter获取为：" + value);
                         return value;
                     },
                     set: function (newVal) {
-                        console.log(`属性名：“${key}”，setter更新为：“${newVal}”`);
+                        console.log("属性名：" + key + "getter获取为：" + newVal);
                         if (value !== newVal) {
                             value = newVal;
                             //  触发更新方法，更新视图
@@ -155,11 +155,11 @@
 
     /**
      * 观察者
-     * @param name  指令名称，例如文本节点，该值设为"text"
-     * @param el    指令对应的DOM元素
-     * @param vm    指令所属myVueES5实例
-     * @param exp   指令对应的值，本例如"number"
-     * @param attr  绑定的属性值，本例为"innerHTML"
+     * @param {string} name  指令名称，例如文本节点，该值设为"text"
+     * @param {HTMLDivElement} el    指令对应的DOM元素
+     * @param {object} vm    指令所属myVueES5实例
+     * @param {string} exp   指令对应的值，本例如"number"
+     * @param {string} attr  绑定的属性值，本例为"innerHTML"
      */
     function Watcher(name, el, vm, exp, attr) {
         this.name = name;         //    指令名称，例如文本节点，该值设为"text"
@@ -192,7 +192,7 @@
                     this.number++;
                 }
             }
-        })
+        });
     }
 
 </script>
