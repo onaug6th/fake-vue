@@ -1,3 +1,7 @@
-# simple-vue
+# super-vue
 
-这是一个模拟vue实现的DEMO
+这是一个模仿vue实现的假vue
+
+### 用法
+
+打开就能用

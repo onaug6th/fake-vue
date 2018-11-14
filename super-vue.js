@@ -1,30 +1,10 @@
-<!DOCTYPE html>
+; (function () {
 
-<head>
-    <title>simple-vue</title>
-</head>
-<style>
-    #app {
-        text-align: center;
-    }
-</style>
-
-<body>
-    <div id="app">
-        <form>
-            <input type="text" v-model="number">
-            <button type="button" v-click="increment">增加</button>
-        </form>
-        <h3 v-bind="number"></h3>
-    </div>
-</body>
-
-<script>
-    function myVueES5(options) {
+    function SuperVueES5(options) {
         this._init(options);
     }
 
-    myVueES5.prototype._init = function (options) {
+    SuperVueES5.prototype._init = function (options) {
         //  将配置储存起来
         this.$options = options;
         //  挂靠目标
@@ -43,15 +23,17 @@
     }
 
     //  劫持属性重写getter，setter属性。数据更新时，调用更新方法。
-    myVueES5.prototype._obverse = function (obj) {
+    SuperVueES5.prototype._obverse = function (obj) {
         var that = this;
         Object.keys(obj).forEach(function (key) {
+
+            //  只有自身属性才需要劫持
             if (obj.hasOwnProperty(key)) {
                 /*
                  *  调度中心   
                  *  为该数据添加映射关系
                  *  this._binding = {
-                        key的值 : {
+                        key : {
                             _directives:[]   
                         }
                     }
@@ -67,6 +49,7 @@
                     that._obverse(value);
                 }
                 /**
+                 * binding是个对象，下有个_directives属性数组，其中存储着所有监听事件的函数
                  * binding = {
                      _directives : []
                  } 
@@ -74,6 +57,7 @@
                  */
                 var binding = that._binding[key];
                 //  对vue实例的data属性进行重写getter，setter
+                //  对defineProperty不熟悉，可以查阅 http://www.onaug6th.com/#/article/10
                 Object.defineProperty(that.$data, key, {
                     enumerable: true,
                     configurable: true,
@@ -98,7 +82,7 @@
     }
 
     //  递归寻找符合指令要求的dom绑定模版语法
-    myVueES5.prototype._complie = function (root) {
+    SuperVueES5.prototype._complie = function (root) {
         var that = this;
         var nodes = root.children;
         //  一层一层递归寻找对应的标记来绑定对应的事件。
@@ -181,18 +165,6 @@
         this.el[this.attr] = this.vm.$data[this.exp];
     }
 
-    window.onload = function () {
-        window.app = new myVueES5({
-            el: '#app',
-            data: {
-                number: 0
-            },
-            methods: {
-                increment: function () {
-                    this.number++;
-                }
-            }
-        });
-    }
+    window.SuperVueES5 = SuperVueES5;
 
-</script>
+})();
