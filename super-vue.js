@@ -23,21 +23,21 @@
         //  内部方法
         this.$methods = options.methods;
 
-        //  _binding保存着model与view的映射关系，Watcher的实例。当model改变时，我们会触发其中的指令类更新，保证view也能实时更新。
-        this._binding = {};
+        //  binding保存着model与view的映射关系，Watcher的实例。当model改变时，我们会触发其中的指令类更新，保证view也能实时更新。
+        this.binding = {};
 
         //  劫持数据getter，setter
-        this._obverse(this.$data);
+        this.obverse(this.$data);
 
         //  对模板进行遍历，将符合要求的DOM绑定上更新指令
-        this._complie(this.$el);
+        this.complie(this.$el);
     }
     
     /**
      * 劫持属性重写getter，setter属性。数据更新时，调用更新方法。
      * @param {object} obj 需要劫持的对象
      */
-    SuperVue.prototype._obverse = function (obj) {
+    SuperVue.prototype.obverse = function (obj) {
 
         var that = this;
 
@@ -48,21 +48,21 @@
                 /*
                  *  调度中心   
                  *  为该数据添加映射关系
-                 *  this._binding = {
+                 *  this.binding = {
                         key : {
                             directives:[]   
                         }
                     }
                  * 
                  */
-                that._binding[key] = {
+                that.binding[key] = {
                     directives: []
                 };
-                //  值
+                //  值，这是个闭包，用于对比后面更新的数据
                 var value = obj[key];
                 //  如果是对象，对内部数据再次遍历
                 if (typeof value === 'object') {
-                    that._obverse(value);
+                    that.obverse(value);
                 }
                 /**
                  * binding是个对象，下有个directives属性数组，其中存储着所有监听事件的函数
@@ -71,25 +71,24 @@
                  } 
                  *
                  */
-                var binding = that._binding[key];
+                var binding = that.binding[key];
                 //  对vue实例的data属性进行重写getter，setter
                 //  对defineProperty不熟悉，可以查阅 http://www.onaug6th.com/#/article/10
                 Object.defineProperty(that.$data, key, {
                     enumerable: true,
                     configurable: true,
                     get: function () {
-                        console.log("属性名：" + key + "getter获取为：" + value);
                         return value;
                     },
                     set: function (newVal) {
-                        console.log("属性名：" + key + "getter获取为：" + newVal);
+                        
                         if (value !== newVal) {
                             value = newVal;
                             //  触发更新方法，更新视图
                             binding.directives.forEach(function (item) {
                                 //  循环调用该值绑定的watcher更新方法
                                 item.update();
-                            })
+                            });
                         }
                     }
                 });
@@ -102,7 +101,7 @@
      * 递归寻找符合指令要求的dom绑定模版语法
      * @param {HTMLElement} root 遍历的根dom
      */
-    SuperVue.prototype._complie = function (root) {
+    SuperVue.prototype.complie = function (root) {
 
         var that = this;
 
@@ -116,7 +115,7 @@
             
             //  如果存在子DOM节点，递归寻找
             if (node.children.length) {
-                this._complie(node);
+                this.complie(node);
             }
 
             /**
@@ -151,7 +150,7 @@
                     var attrVal = node.getAttribute('v-model');
                     
                     //  往回调函数队列中推入观察者函数
-                    that._binding[attrVal].directives.push(new Watcher(
+                    that.binding[attrVal].directives.push(new Watcher(
                         node,
                         'value',
                         that,
@@ -169,7 +168,7 @@
             //  v-bind视图层绑定数据
             if (node.hasAttribute('v-bind')) {
                 var attrVal = node.getAttribute('v-bind');
-                that._binding[attrVal].directives.push(new Watcher(
+                that.binding[attrVal].directives.push(new Watcher(
                     node,
                     'innerHTML',
                     that,
