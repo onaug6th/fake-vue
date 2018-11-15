@@ -1,9 +1,18 @@
 ; (function () {
 
+    /**
+     * 构造函数
+     * 请查阅vue文档，传个正儿八经的配置进来
+     * @param {*} options 配置
+     */
     function SuperVue(options) {
         this.init(options);
     }
 
+    /**
+     * 初始化
+     * @param {object} options 配置
+     */
     SuperVue.prototype.init = function (options) {
         //  储存配置
         this.$options = options;
@@ -89,7 +98,10 @@
 
     }
 
-    //  递归寻找符合指令要求的dom绑定模版语法
+    /**
+     * 递归寻找符合指令要求的dom绑定模版语法
+     * @param {HTMLElement} root 遍历的根dom
+     */
     SuperVue.prototype._complie = function (root) {
 
         var that = this;
