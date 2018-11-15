@@ -1,10 +1,10 @@
 ; (function () {
 
-    function SuperVueES5(options) {
+    function SuperVue(options) {
         this.init(options);
     }
 
-    SuperVueES5.prototype.init = function (options) {
+    SuperVue.prototype.init = function (options) {
         //  储存配置
         this.$options = options;
         //  挂靠目标
@@ -23,9 +23,12 @@
         //  对模板进行遍历，将符合要求的DOM绑定上更新指令
         this._complie(this.$el);
     }
-
-    //  劫持属性重写getter，setter属性。数据更新时，调用更新方法。
-    SuperVueES5.prototype._obverse = function (obj) {
+    
+    /**
+     * 劫持属性重写getter，setter属性。数据更新时，调用更新方法。
+     * @param {object} obj 需要劫持的对象
+     */
+    SuperVue.prototype._obverse = function (obj) {
 
         var that = this;
 
@@ -87,7 +90,7 @@
     }
 
     //  递归寻找符合指令要求的dom绑定模版语法
-    SuperVueES5.prototype._complie = function (root) {
+    SuperVue.prototype._complie = function (root) {
 
         var that = this;
 
@@ -104,7 +107,10 @@
                 this._complie(node);
             }
 
-            //  当我们发现了 v-click 属性，说明要绑定 click事件
+            /**
+             * 当我们发现了 v-click 属性，说明要绑定 click事件。
+             * 而这里做的事情，仅仅是从将拥有v-click的按钮绑定点击事件，指向实例对象里的方法。
+             */
             if (node.hasAttribute('v-click')) {
                 
                 node.onclick = (function () {
@@ -127,10 +133,11 @@
             if (node.hasAttribute('v-model') && (node.tagName = 'INPUT' || node.tagName == 'TEXTAREA')) {
 
                 //  监听“input”事件，注意！“input”事件是一个事件，和change事件一样的。
-                node.addEventListener('input', (function (key) {
+                node.addEventListener('input', (function (i) {
 
                     //  attrVal：存在data对象中的属性
                     var attrVal = node.getAttribute('v-model');
+                    
                     //  往回调函数队列中推入观察者函数
                     that._binding[attrVal].directives.push(new Watcher(
                         node,
@@ -141,7 +148,7 @@
 
                     //  将data对象中的属性，修改为节点的值
                     return function () {
-                        that.$data[attrVal] = nodes[key].value;
+                        that.$data[attrVal] = nodes[i].value;
                     }
 
                 })(i));
@@ -164,14 +171,14 @@
      * 负责更新视图的观察者对象
      * @param {HTMLElement} el    指令对应的DOM元素
      * @param {string} elAttr  绑定的属性值，本例为"innerHTML"
-     * @param {object} vm    指令所属SuperVueES5实例
+     * @param {object} vm    指令所属SuperVue实例
      * @param {string} vmAttr   指令对应的值，本例如"number"
      */
     function Watcher(el, elAttr, vm, vmAttr ) {
 
         this.el = el;             //    指令对应的DOM元素
         this.elAttr = elAttr;     //    绑定的属性值，本例为"innerHTML"
-        this.vm = vm;             //    指令所属SuperVueES5实例
+        this.vm = vm;             //    指令所属SuperVue实例
         this.vmAttr = vmAttr;     //    指令对应的值，本例如"number"
 
         this.update();
@@ -184,6 +191,6 @@
         this.el[this.elAttr] = this.vm.$data[this.vmAttr];
     }
 
-    window.SuperVueES5 = SuperVueES5;
+    window.SuperVue = SuperVue;
 
 })();

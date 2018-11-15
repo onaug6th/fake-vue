@@ -16,23 +16,23 @@
             <button type="button" v-click="increment">增加</button>
         </form>
         <h3 v-bind="number"></h3>
-        <!-- <form>
+        <form>
             <input type="text" v-model="people.name">
         </form>
-        <h3 v-bind="people.name"></h3> -->
+        <h3 v-bind="people.name"></h3>
     </div>
 </body>
 <script src="./super-vue.js"></script>
 <script>
     
     window.onload = function () {
-        window.app = new SuperVueES5({
+        window.app = new SuperVue({
             el: '#app',
             data: {
-                number: 0,
-                // people :{
-                //     name : "august"
-                // }
+                // number: 0,
+                people :{
+                    name : "august"
+                }
             },
             methods: {
                 increment: function () {
