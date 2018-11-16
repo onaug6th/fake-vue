@@ -1,4 +1,4 @@
-; (function () {
+; (function (window, document) {
 
     /**
      * 构造函数
@@ -32,7 +32,7 @@
         //  对模板进行遍历，将符合要求的DOM绑定上更新指令
         this.complie(this.$el);
     }
-    
+
     /**
      * 劫持属性重写getter，setter属性。数据更新时，调用更新方法。
      * @param {object} obj 需要劫持的对象
@@ -58,7 +58,7 @@
                 that.binding[key] = {
                     directives: []
                 };
-                //  值，这是个闭包，用于对比后面更新的数据
+                //  闭包数据，代表当前劫持属性的值。用于旧新值对比
                 var value = obj[key];
                 //  如果是对象，对内部数据再次遍历
                 if (typeof value === 'object') {
@@ -81,7 +81,7 @@
                         return value;
                     },
                     set: function (newVal) {
-                        
+
                         if (value !== newVal) {
                             value = newVal;
                             //  触发更新方法，更新视图
@@ -112,7 +112,7 @@
         for (var i = 0; i < nodes.length; i++) {
 
             var node = nodes[i];
-            
+
             //  如果存在子DOM节点，递归寻找
             if (node.children.length) {
                 this.complie(node);
@@ -123,14 +123,14 @@
              * 而这里做的事情，仅仅是从将拥有v-click的按钮绑定点击事件，指向实例对象里的方法。
              */
             if (node.hasAttribute('v-click')) {
-                
+
                 node.onclick = (function () {
                     /**
                      * 这里的fnName 是 v-click 的方法名。
                      * v-click="sayName" fnName就为sayName
                      */
                     var fnName = nodes[i].getAttribute('v-click');
-                    
+
                     /**
                      * 返回method配置中的方法，延后执行
                      * 传递that.$data 是为了能在method中进行 this.xxx 进行取值
@@ -148,14 +148,9 @@
 
                     //  attrVal：存在data对象中的属性
                     var attrVal = node.getAttribute('v-model');
-                    
+
                     //  往回调函数队列中推入观察者函数
-                    that.binding[attrVal].directives.push(new Watcher(
-                        node,
-                        'value',
-                        that,
-                        attrVal
-                    ));
+                    that.binding[attrVal].directives.push(new Watcher(node, 'value', that, attrVal));
 
                     //  将data对象中的属性，修改为节点的值
                     return function () {
@@ -168,12 +163,7 @@
             //  v-bind视图层绑定数据
             if (node.hasAttribute('v-bind')) {
                 var attrVal = node.getAttribute('v-bind');
-                that.binding[attrVal].directives.push(new Watcher(
-                    node,
-                    'innerHTML',
-                    that,
-                    attrVal
-                ))
+                that.binding[attrVal].directives.push(new Watcher(node, 'innerHTML', that, attrVal));
             }
         }
     }
@@ -185,7 +175,7 @@
      * @param {object} vm    指令所属SuperVue实例
      * @param {string} vmAttr   指令对应的值，本例如"number"
      */
-    function Watcher(el, elAttr, vm, vmAttr ) {
+    function Watcher(el, elAttr, vm, vmAttr) {
 
         this.el = el;             //    指令对应的DOM元素
         this.elAttr = elAttr;     //    绑定的属性值，本例为"innerHTML"
@@ -204,4 +194,4 @@
 
     window.SuperVue = SuperVue;
 
-})();
+})(window, window.document);
