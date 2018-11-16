@@ -36,8 +36,9 @@
     /**
      * 劫持属性重写getter，setter属性。数据更新时，调用更新方法。
      * @param {object} obj 需要劫持的对象
+     * @param {string} parentName obj所属父属性名称，以下划线分割识别父属性
      */
-    SuperVue.prototype.obverse = function (obj) {
+    SuperVue.prototype.obverse = function (obj, parentName) {
 
         var that = this;
 
@@ -55,15 +56,19 @@
                     }
                  * 
                  */
-                that.binding[key] = {
-                    directives: []
-                };
                 //  闭包数据，代表当前劫持属性的值。用于旧新值对比
                 var value = obj[key];
                 //  如果是对象，对内部数据再次遍历
                 if (typeof value === 'object') {
-                    that.obverse(value);
+                    that.obverse(value,
+                        parentName ?
+                            parentName + "_" + key :
+                            key
+                    );
                 }
+                that.binding[parentName ? (parentName + "_" + key) : key] = {
+                    directives: []
+                };
                 /**
                  * binding是个对象，下有个directives属性数组，其中存储着所有监听事件的函数
                  * binding = {
@@ -147,14 +152,22 @@
                 node.addEventListener('input', (function (i) {
 
                     //  attrVal：存在data对象中的属性
-                    var attrVal = node.getAttribute('v-model');
+                    var attrVal = that.replaceUnderLine(node.getAttribute('v-model'));
 
                     //  往回调函数队列中推入观察者函数
                     that.binding[attrVal].directives.push(new Watcher(node, 'value', that, attrVal));
 
                     //  将data对象中的属性，修改为节点的值
                     return function () {
-                        that.$data[attrVal] = nodes[i].value;
+                        var attrList = attrVal.split("_");
+
+                        var nodeValue = nodes[i].value;
+
+                        if(attrList.length > 1){
+
+                        }
+                        
+                        that.$data[attrVal] = nodeValue;
                     }
 
                 })(i));
@@ -162,10 +175,19 @@
 
             //  v-bind视图层绑定数据
             if (node.hasAttribute('v-bind')) {
-                var attrVal = node.getAttribute('v-bind');
+                var attrVal = that.replaceUnderLine(node.getAttribute('v-bind'));
+
                 that.binding[attrVal].directives.push(new Watcher(node, 'innerHTML', that, attrVal));
             }
         }
+    }
+
+    /**
+     * 替换下划线
+     * @param {string} value 需要替换的内容
+     */
+    SuperVue.prototype.replaceUnderLine = function (value) {
+        return value.indexOf(".") && (value = value.replace(/\./g, "_"));
     }
 
     /**
@@ -189,8 +211,29 @@
     Watcher.prototype.update = function () {
 
         //  这里将 el(指令挂载的DOM，例如input,textarea)的attr（挂载的DOM的属性，例如value或者innerHTML）修改为vm（实例对象）的data属性中的（vmAttr）值
-        this.el[this.elAttr] = this.vm.$data[this.vmAttr];
+
+        var attrList = this.vmAttr.split("_");
+
+        var vmValue = this.vm.$data[this.vmAttr];
+
+        (attrList.length > 1 ) && (vmValue = this.vm.getDeepValue(attrList));
+
+        this.el[this.elAttr] = vmValue;
+
     }
+
+    /**
+     * 获取深层数据
+     * @param {Array} attrList 属性列表
+     */
+    SuperVue.prototype.getDeepValue = function(attrList){
+        var answer = "";
+        for (var i in attrList){
+            answer = this.$data[attrList[i]];
+        }
+        return answer;
+    }
+
 
     window.SuperVue = SuperVue;
 
