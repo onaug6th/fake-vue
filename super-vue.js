@@ -44,39 +44,33 @@
 
         Object.keys(obj).forEach(function (key) {
 
-            //  闭包数据，代表当前劫持属性的值。用于旧新值对比
+            //  闭包数据，代表当前劫持属性的值。用于setter旧新值对比
             var value = obj[key];
-            //  添加监听的属性名称
+            //  添加监听的属性名称，如果是深层属性，会携带parentName以下划线分割
             var attr = parentName ? (parentName + "_" + key) : key;
 
-            /*
-             *  调度中心   
-             *  为该数据添加映射关系
-             *  that.binding = {
-             *    key : {
-             *        directives:[]   
-             *    }
+            /**
+             *  {object} [binding] 调度中心
+             *  在调度中心中为当前属性添加指令（directives）属性数组，其中存储着所有监听事件的函数
+             *  that.binding.attr = {
+             *      directives:[]
              * }
              * 
              */
-            that.binding[attr] = {
+            var binding = that.binding[attr] = {
                 directives: []
             };
 
-            //  如果是对象，对内部数据再次遍历
+            //  如果当前对象的属性是object类型，对内部数据再次遍历
             if (typeof value === 'object') {
                 that.obverse(value, attr);
             }
 
             /**
-             * binding是个对象，下有个directives属性数组，其中存储着所有监听事件的函数
-             * binding = {
-             *   directives : []
-             * } 
+             * 对obj对象的key属性进行getter，setter劫持
+             * obj与key是个不定值，可能是一级属性也可能是深度属性
+             * 对defineProperty不熟悉，可以查阅 http://www.onaug6th.com/#/article/10
              */
-            var binding = that.binding[attr];
-            //  对vue实例的data属性进行重写getter，setter
-            //  对defineProperty不熟悉，可以查阅 http://www.onaug6th.com/#/article/10
             Object.defineProperty(obj, key, {
                 enumerable: true,
                 configurable: true,
@@ -84,7 +78,7 @@
                     return value;
                 },
                 set: function (newVal) {
-                    
+
                     if (value !== newVal) {
                         value = newVal;
                         //  触发更新方法，更新视图
@@ -135,8 +129,7 @@
                     var fnName = nodes[i].getAttribute('v-click');
 
                     /**
-                     * 返回method配置中的方法，延后执行
-                     * 传递that.$data 是为了能在method中进行 this.xxx 进行取值
+                     * 使用Function.prototype.bind，将执行作用域指向vue实例的data属性，返回原函数的copy
                      */
                     return that.$methods[fnName].bind(that.$data);
                 })();
@@ -146,7 +139,10 @@
             //  v-model只有在input和textarea输入框才起效
             if (node.hasAttribute('v-model') && (node.tagName = 'INPUT' || node.tagName == 'TEXTAREA')) {
 
-                //  监听“input”事件，注意！“input”事件是一个事件，和change事件一样的。
+                /**
+                 * 监听“input” 输入
+                 * 为节点的input事情返回一个立即执行函数，为了每次的 i 能够正确获取。
+                 */
                 node.addEventListener('input', (function (i) {
 
                     //  attrVal：存在data对象中的属性
@@ -157,34 +153,33 @@
 
                     //  将data对象中的属性，修改为节点的值
                     return function () {
+                        
+                        //  绑定的属性
                         var attrList = attrVal.split("_");
-
+                        //  当前节点值
                         var nodeValue = nodes[i].value;
-
+                        //  更新的对象，默认为实例的data属性
                         var obj = that.$data;
-
+                        //  更新的值
                         var attr = "";
 
-                        if (attrList.length > 1) {
+                        attrList.forEach(function (item, index) {
+                            if (index != attrList.length - 1) {
+                                obj = obj[item];
+                            } else {
+                                attr = item;
+                            }
+                        });
 
-                            attrList.forEach(function (item, index) {
-                                if (index != attrList.length - 1) {
-                                    obj = obj[item];
-                                } else {
-                                    attr = item;
-                                }
-                            });
-                            obj[attr] = nodeValue;
-                        } else {
-                            that.$data[attrVal] = nodeValue;
-                        }
-
+                        obj[attr] = nodeValue;
                     }
 
                 })(i));
             }
 
-            //  v-bind视图层绑定数据
+            /**
+             * 为v-bind绑定的属性，添加到更新队列
+             */
             if (node.hasAttribute('v-bind')) {
                 var attrVal = that.replaceUnderLine(node.getAttribute('v-bind'));
 
@@ -210,24 +205,23 @@
      */
     function Watcher(el, elAttr, vm, vmAttr) {
 
-        this.el = el;             //    指令对应的DOM元素
-        this.elAttr = elAttr;     //    绑定的属性值，本例为"innerHTML"
-        this.vm = vm;             //    指令所属SuperVue实例
-        this.vmAttr = vmAttr;     //    指令对应的值，本例如"number"
+        this.el = el;
+        this.elAttr = elAttr;
+        this.vm = vm;
+        this.vmAttr = vmAttr;
 
         this.update();
     }
 
-    //  更新方法
+    /**
+     * 更新方法
+     * 这里将 el(指令挂载的DOM，例如input,textarea)的attr（挂载的DOM的属性，例如value或者innerHTML）修改为vm（实例对象）中的对应的绑定属性值
+     */
     Watcher.prototype.update = function () {
-
-        //  这里将 el(指令挂载的DOM，例如input,textarea)的attr（挂载的DOM的属性，例如value或者innerHTML）修改为vm（实例对象）的data属性中的（vmAttr）值
 
         var attrList = this.vmAttr.split("_");
 
-        var vmValue = this.vm.$data[this.vmAttr];
-
-        (attrList.length > 1) && (vmValue = this.vm.getDeepValue(attrList));
+        var vmValue = this.vm.getDeepValue(attrList);
 
         this.el[this.elAttr] = vmValue;
 
