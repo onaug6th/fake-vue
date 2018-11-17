@@ -11,15 +11,28 @@
 
 <body>
     <div id="app">
-        <!-- <form>
+
+        <form>
             <input type="text" v-model="number">
             <button type="button" v-click="increment">增加</button>
         </form>
-        <h3 v-bind="number"></h3> -->
+
+        <h3 v-bind="number"></h3>
         <form>
             <input type="text" v-model="people.name">
         </form>
         <h3 v-bind="people.name"></h3>
+
+        <form>
+            <input type="text" v-model="people.info.age">
+        </form>
+        <h3 v-bind="people.info.age"></h3>
+
+        <form>
+            <input type="text" v-model="people.goods.id">
+        </form>
+        <h3 v-bind="people.goods.id"></h3>
+
     </div>
 </body>
 <script src="./super-vue.js"></script>
@@ -29,9 +42,15 @@
         window.app = new SuperVue({
             el: '#app',
             data: {
-                // number: 0,
+                number: 0,
                 people: {
-                    name : "august"
+                    name : "august",
+                    info : {
+                        age : 18
+                    },
+                    goods : {
+                        id : 1
+                    }
                 }
             },
             methods: {

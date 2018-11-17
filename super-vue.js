@@ -44,60 +44,58 @@
 
         Object.keys(obj).forEach(function (key) {
 
-            //  只有自身属性才需要劫持
-            if (obj.hasOwnProperty(key)) {
-                /*
-                 *  调度中心   
-                 *  为该数据添加映射关系
-                 *  this.binding = {
-                        key : {
-                            directives:[]   
-                        }
-                    }
-                 * 
-                 */
-                //  闭包数据，代表当前劫持属性的值。用于旧新值对比
-                var value = obj[key];
-                //  如果是对象，对内部数据再次遍历
-                if (typeof value === 'object') {
-                    that.obverse(value,
-                        parentName ?
-                            parentName + "_" + key :
-                            key
-                    );
-                }
-                that.binding[parentName ? (parentName + "_" + key) : key] = {
-                    directives: []
-                };
-                /**
-                 * binding是个对象，下有个directives属性数组，其中存储着所有监听事件的函数
-                 * binding = {
-                    directives : []
-                 } 
-                 *
-                 */
-                var binding = that.binding[key];
-                //  对vue实例的data属性进行重写getter，setter
-                //  对defineProperty不熟悉，可以查阅 http://www.onaug6th.com/#/article/10
-                Object.defineProperty(that.$data, key, {
-                    enumerable: true,
-                    configurable: true,
-                    get: function () {
-                        return value;
-                    },
-                    set: function (newVal) {
+            //  闭包数据，代表当前劫持属性的值。用于旧新值对比
+            var value = obj[key];
+            //  添加监听的属性名称
+            var attr = parentName ? (parentName + "_" + key) : key;
 
-                        if (value !== newVal) {
-                            value = newVal;
-                            //  触发更新方法，更新视图
-                            binding.directives.forEach(function (item) {
-                                //  循环调用该值绑定的watcher更新方法
-                                item.update();
-                            });
-                        }
-                    }
-                });
+            /*
+             *  调度中心   
+             *  为该数据添加映射关系
+             *  that.binding = {
+             *    key : {
+             *        directives:[]   
+             *    }
+             * }
+             * 
+             */
+            that.binding[attr] = {
+                directives: []
+            };
+
+            //  如果是对象，对内部数据再次遍历
+            if (typeof value === 'object') {
+                that.obverse(value, attr);
             }
+
+            /**
+             * binding是个对象，下有个directives属性数组，其中存储着所有监听事件的函数
+             * binding = {
+             *   directives : []
+             * } 
+             */
+            var binding = that.binding[attr];
+            //  对vue实例的data属性进行重写getter，setter
+            //  对defineProperty不熟悉，可以查阅 http://www.onaug6th.com/#/article/10
+            Object.defineProperty(obj, key, {
+                enumerable: true,
+                configurable: true,
+                get: function () {
+                    return value;
+                },
+                set: function (newVal) {
+                    
+                    if (value !== newVal) {
+                        value = newVal;
+                        //  触发更新方法，更新视图
+                        binding.directives.forEach(function (item) {
+                            //  循环调用该值绑定的watcher更新方法
+                            item.update();
+                        });
+                    }
+                }
+            });
+
         });
 
     }
@@ -120,7 +118,7 @@
 
             //  如果存在子DOM节点，递归寻找
             if (node.children.length) {
-                this.complie(node);
+                that.complie(node);
             }
 
             /**
@@ -163,11 +161,24 @@
 
                         var nodeValue = nodes[i].value;
 
-                        if(attrList.length > 1){
+                        var obj = that.$data;
 
+                        var attr = "";
+
+                        if (attrList.length > 1) {
+
+                            attrList.forEach(function (item, index) {
+                                if (index != attrList.length - 1) {
+                                    obj = obj[item];
+                                } else {
+                                    attr = item;
+                                }
+                            });
+                            obj[attr] = nodeValue;
+                        } else {
+                            that.$data[attrVal] = nodeValue;
                         }
-                        
-                        that.$data[attrVal] = nodeValue;
+
                     }
 
                 })(i));
@@ -216,7 +227,7 @@
 
         var vmValue = this.vm.$data[this.vmAttr];
 
-        (attrList.length > 1 ) && (vmValue = this.vm.getDeepValue(attrList));
+        (attrList.length > 1) && (vmValue = this.vm.getDeepValue(attrList));
 
         this.el[this.elAttr] = vmValue;
 
@@ -226,10 +237,10 @@
      * 获取深层数据
      * @param {Array} attrList 属性列表
      */
-    SuperVue.prototype.getDeepValue = function(attrList){
-        var answer = "";
-        for (var i in attrList){
-            answer = this.$data[attrList[i]];
+    SuperVue.prototype.getDeepValue = function (attrList) {
+        var answer = this.$data;
+        for (var i in attrList) {
+            answer = answer[attrList[i]];
         }
         return answer;
     }
