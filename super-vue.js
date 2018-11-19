@@ -36,7 +36,7 @@
     /**
      * 劫持属性重写getter，setter属性。数据更新时，调用更新方法。
      * @param {object} obj 需要劫持的对象
-     * @param {string} parentName obj所属父属性名称，以下划线分割识别父属性
+     * @param {string} parentName obj所属父属性名称，以与操作符分割识别父属性
      */
     SuperVue.prototype.obverse = function (obj, parentName) {
 
@@ -46,8 +46,8 @@
 
             //  闭包数据，代表当前劫持属性的值。用于setter旧新值对比
             var value = obj[key];
-            //  添加监听的属性名称，如果是深层属性，会携带parentName以下划线分割
-            var attr = parentName ? (parentName + "_" + key) : key;
+            //  添加监听的属性名称，如果是深层属性，会携带parentName以与操作符分割
+            var attr = parentName ? (parentName + "&" + key) : key;
 
             /**
              *  {object} [binding] 调度中心
@@ -155,7 +155,7 @@
                     return function () {
                         
                         //  绑定的属性
-                        var attrList = attrVal.split("_");
+                        var attrList = attrVal.split("&");
                         //  当前节点值
                         var nodeValue = nodes[i].value;
                         //  更新的对象，默认为实例的data属性
@@ -189,11 +189,11 @@
     }
 
     /**
-     * 替换下划线
+     * 替换与操作符
      * @param {string} value 需要替换的内容
      */
     SuperVue.prototype.replaceUnderLine = function (value) {
-        return value.indexOf(".") && (value = value.replace(/\./g, "_"));
+        return value.indexOf(".") && (value = value.replace(/\./g, "&"));
     }
 
     /**
@@ -219,7 +219,7 @@
      */
     Watcher.prototype.update = function () {
 
-        var attrList = this.vmAttr.split("_");
+        var attrList = this.vmAttr.split("&");
 
         var vmValue = this.vm.getDeepValue(attrList);
 
