@@ -5,7 +5,7 @@
      * 请查阅vue文档，传个正儿八经的配置进来
      * @param {*} options 配置
      */
-    function SuperVue(options) {
+    function FakeVue(options) {
         this.init(options);
     }
 
@@ -13,7 +13,7 @@
      * 初始化
      * @param {object} options 配置
      */
-    SuperVue.prototype.init = function (options) {
+    FakeVue.prototype.init = function (options) {
         //  储存配置
         this.$options = options;
         //  挂靠目标
@@ -38,7 +38,7 @@
      * @param {object} obj 需要劫持的对象
      * @param {string} parentName obj所属父属性名称，以与操作符分割识别父属性
      */
-    SuperVue.prototype.obverse = function (obj, parentName) {
+    FakeVue.prototype.obverse = function (obj, parentName) {
 
         var that = this;
 
@@ -98,7 +98,7 @@
      * 递归寻找符合指令要求的dom绑定模版语法
      * @param {HTMLElement} root 遍历的根dom
      */
-    SuperVue.prototype.complie = function (root) {
+    FakeVue.prototype.complie = function (root) {
 
         var that = this;
 
@@ -192,7 +192,7 @@
      * 替换与操作符
      * @param {string} value 需要替换的内容
      */
-    SuperVue.prototype.replaceUnderLine = function (value) {
+    FakeVue.prototype.replaceUnderLine = function (value) {
         return value.indexOf(".") && (value = value.replace(/\./g, "&"));
     }
 
@@ -200,7 +200,7 @@
      * 负责更新视图的观察者对象
      * @param {HTMLElement} el    指令对应的DOM元素
      * @param {string} elAttr  绑定的属性值，本例为"innerHTML"
-     * @param {object} vm    指令所属SuperVue实例
+     * @param {object} vm    指令所属FakeVue实例
      * @param {string} vmAttr   指令对应的值，本例如"number"
      */
     function Watcher(el, elAttr, vm, vmAttr) {
@@ -231,7 +231,7 @@
      * 获取深层数据
      * @param {Array} attrList 属性列表
      */
-    SuperVue.prototype.getDeepValue = function (attrList) {
+    FakeVue.prototype.getDeepValue = function (attrList) {
         var answer = this.$data;
         for (var i in attrList) {
             answer = answer[attrList[i]];
@@ -240,6 +240,6 @@
     }
 
 
-    window.SuperVue = SuperVue;
+    window.FakeVue = FakeVue;
 
 })(window, window.document);

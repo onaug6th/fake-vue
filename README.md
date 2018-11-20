@@ -1,4 +1,4 @@
-# super-vue
+# fake-vue
 
 这是一个模仿vue实现的假vue
 
