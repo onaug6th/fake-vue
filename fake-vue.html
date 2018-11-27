@@ -14,7 +14,7 @@
 
         <form>
             <input type="text" v-model="number">
-            <button type="button" v-click="increment">增加</button>
+            <button type="button" v-click="addNumber">增加</button>
         </form>
 
         <h3 v-bind="number"></h3>
@@ -30,7 +30,7 @@
 
         <form>
             <input type="text" v-model="people.goods.id">
-            <button type="button" v-click="increment2">增加</button>
+            <button type="button" v-click="addId">增加</button>
         </form>
 
         <form>
@@ -61,10 +61,10 @@
                 }
             },
             methods: {
-                increment: function () {
+                addNumber: function () {
                     this.number++;
                 },
-                increment2: function(){
+                addId: function () {
                     this.people.goods.id++;
                 }
             }

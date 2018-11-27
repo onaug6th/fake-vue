@@ -31,7 +31,7 @@
         //  调度中心
         this.binding = {};
 
-        //  劫持数据
+        //  数据劫持
         this.obverse(this.$data);
 
         //  遍历模板
@@ -146,6 +146,8 @@
 
     /**
      * 模板指令，v-click
+     * v-click：
+     * 1. 给需要绑定的节点，添加点击事件。在点击时执行绑定的回调
      * @param {HTMLElement} node 解析的DOM节点
      */
     FakeVue.prototype.directiveClick = function (node) {
@@ -185,7 +187,6 @@
 
         /**
          * 监听“input” 输入
-         * 这里执行一个立即执行函数，并且将实时的 node 当作参数传入。并返回一个新方法。
          */
         node.addEventListener('input', function () {
 
@@ -198,7 +199,7 @@
             var attr = deepObj.attr;
 
             //  将需要更新的对象的值，修改为当前DOM节点新内容
-            obj[attr] = node.value;;
+            obj[attr] = node.value;
         });
     }
 
@@ -216,7 +217,7 @@
     }
 
     /**
-     * 替换与操作符
+     * 替换分割符
      * @param {string} value 需要替换的内容
      */
     FakeVue.prototype.replaceUnderLine = function (value) {
