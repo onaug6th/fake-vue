@@ -1,3 +1,8 @@
+/**
+ * @author onaug6th <onaug6th@qq.com>
+ * @description 模仿Vue实现的假Vue
+ */
+
 ; (function (window, document) {
 
     /**
@@ -23,18 +28,18 @@
         //  内部方法
         this.$methods = options.methods;
 
-        //  binding保存着model与view的映射关系，Watcher的实例。当model改变时，我们会触发其中的指令类更新，保证view也能实时更新。
+        //  调度中心
         this.binding = {};
 
-        //  劫持数据getter，setter
+        //  劫持数据
         this.obverse(this.$data);
 
-        //  对模板进行遍历，将符合要求的DOM绑定上更新指令
+        //  遍历模板
         this.complie(this.$el);
     }
 
     /**
-     * 劫持属性重写getter，setter属性。数据更新时，调用更新方法。
+     * 劫持属性重写getter，setter属性。数据更新时，调用存储的所有更新方法。
      * @param {object} obj 需要劫持的对象
      * @param {string} parentName obj所属父属性名称，以与操作符分割识别父属性
      */
@@ -51,7 +56,7 @@
 
             /**
              *  {object} [binding] 调度中心
-             *  在调度中心中为当前属性添加指令（directives）属性数组，其中存储着所有监听事件的函数
+             *  在调度中心中为当前属性添加更新方法数组，其中存储着所有更新方法
              *  that.binding.attr = {
              *      directives:[]
              * }
@@ -100,92 +105,114 @@
      */
     FakeVue.prototype.complie = function (root) {
 
+        //  FakeVue实例对象
         var that = this;
 
-        //  获取挂靠目标下的所有子节点
+        //  获取目标下的所有子节点
         var nodes = root.children;
 
-        //  一层一层递归寻找对应的标记来绑定对应的事件。
+        //  递归寻找，如发现对应的标记。进行特定处理。
         for (var i = 0; i < nodes.length; i++) {
 
             var node = nodes[i];
 
-            //  如果存在子DOM节点，递归寻找
+            //  如果存在子DOM节点，继续递归寻找
             if (node.children.length) {
                 that.complie(node);
             }
 
-            /**
-             * 当我们发现了 v-click 属性，说明要绑定 click事件。
-             * 而这里做的事情，仅仅是从将拥有v-click的按钮绑定点击事件，指向实例对象里的方法。
-             */
+            //  v-click
             if (node.hasAttribute('v-click')) {
 
-                node.onclick = (function () {
-                    /**
-                     * 这里的fnName 是 v-click 的方法名。
-                     * v-click="sayName" fnName就为sayName
-                     */
-                    var fnName = nodes[i].getAttribute('v-click');
-
-                    /**
-                     * 使用Function.prototype.bind，将执行作用域指向vue实例的data属性，返回原函数的copy
-                     */
-                    return that.$methods[fnName].bind(that.$data);
-                })();
+                that.directiveClick(node);
 
             }
 
             //  v-model只有在input和textarea输入框才起效
             if (node.hasAttribute('v-model') && (node.tagName = 'INPUT' || node.tagName == 'TEXTAREA')) {
 
-                /**
-                 * 监听“input” 输入
-                 * 为节点的input事情返回一个立即执行函数，为了每次的 i 能够正确获取。
-                 */
-                node.addEventListener('input', (function (i) {
+                that.directiveModel(node);
 
-                    //  attrVal：存在data对象中的属性
-                    var attrVal = that.replaceUnderLine(node.getAttribute('v-model'));
-
-                    //  往回调函数队列中推入观察者函数
-                    that.binding[attrVal].directives.push(new Watcher(node, 'value', that, attrVal));
-
-                    //  将data对象中的属性，修改为节点的值
-                    return function () {
-                        
-                        //  绑定的属性
-                        var attrList = attrVal.split("&");
-                        //  当前节点值
-                        var nodeValue = nodes[i].value;
-                        //  更新的对象，默认为实例的data属性
-                        var obj = that.$data;
-                        //  更新的值
-                        var attr = "";
-
-                        attrList.forEach(function (item, index) {
-                            if (index != attrList.length - 1) {
-                                obj = obj[item];
-                            } else {
-                                attr = item;
-                            }
-                        });
-
-                        obj[attr] = nodeValue;
-                    }
-
-                })(i));
             }
 
-            /**
-             * 为v-bind绑定的属性，添加到更新队列
-             */
+            //  v-bind
             if (node.hasAttribute('v-bind')) {
-                var attrVal = that.replaceUnderLine(node.getAttribute('v-bind'));
 
-                that.binding[attrVal].directives.push(new Watcher(node, 'innerHTML', that, attrVal));
+                that.directiveBind(node);
+
             }
         }
+    }
+
+    /**
+     * 模板指令，v-click
+     * @param {HTMLElement} node 解析的DOM节点
+     */
+    FakeVue.prototype.directiveClick = function (node) {
+
+        var that = this;
+
+        node.addEventListener("click", (function () {
+            /**
+             * 这里的fnName 是 v-click 的方法名。
+             * v-click="sayName" fnName就为sayName
+             */
+            var fnName = node.getAttribute('v-click');
+
+            /**
+             * 使用Function.prototype.bind，将执行作用域指向vue实例的data属性，返回原函数的copy
+             */
+            return that.$methods[fnName].bind(that.$data);
+        })());
+    }
+
+    /**
+     * 模板指令，v-model
+     * v-mode:
+     * 1. 给绑定的属性，添加模板更新队列方法。
+     * 2. 给模板添加事件，当模板输入时，更新绑定的属性值
+     * @param {HTMLElement} node 解析的DOM节点
+     */
+    FakeVue.prototype.directiveModel = function (node) {
+
+        var that = this;
+
+        //  当前节点v-model的数据，会被转义成&分割的属性字符串
+        var attrVal = that.replaceUnderLine(node.getAttribute('v-model'));
+
+        //  推入回调函数队列，在绑定的数据更新时，也更新该 node
+        that.binding[attrVal].directives.push(new Watcher(node, 'value', that, attrVal));
+
+        /**
+         * 监听“input” 输入
+         * 这里执行一个立即执行函数，并且将实时的 node 当作参数传入。并返回一个新方法。
+         */
+        node.addEventListener('input', function () {
+
+            //  获取最深属性所属对象，及最深属性名称
+            var deepObj = that.getDeepValOrObj(attrVal, "obj");
+
+            //  更新的对象，默认为实例的data属性
+            var obj = deepObj.obj;
+            //  更新的属性名称
+            var attr = deepObj.attr;
+
+            //  将需要更新的对象的值，修改为当前DOM节点新内容
+            obj[attr] = node.value;;
+        });
+    }
+
+    /**
+     * 模板指令，v-bind
+     * v-bind：
+     * 1. 仅仅是给绑定的属性添加一个更新队列方法
+     * @param {HTMLElement} node 解析的DOM节点
+     */
+    FakeVue.prototype.directiveBind = function (node) {
+
+        var attrVal = this.replaceUnderLine(node.getAttribute('v-bind'));
+
+        this.binding[attrVal].directives.push(new Watcher(node, 'innerHTML', this, attrVal));
     }
 
     /**
@@ -193,15 +220,15 @@
      * @param {string} value 需要替换的内容
      */
     FakeVue.prototype.replaceUnderLine = function (value) {
-        return value.indexOf(".") && (value = value.replace(/\./g, "&"));
+        return value.replace(/\./g, "&");
     }
 
     /**
      * 负责更新视图的观察者对象
      * @param {HTMLElement} el    指令对应的DOM元素
-     * @param {string} elAttr  绑定的属性值，本例为"innerHTML"
+     * @param {string} elAttr  绑定的属性值，例如 "value，innerHTML"
      * @param {object} vm    指令所属FakeVue实例
-     * @param {string} vmAttr   指令对应的值，本例如"number"
+     * @param {string} vmAttr   指令对应在data的值，例如 "number，name"
      */
     function Watcher(el, elAttr, vm, vmAttr) {
 
@@ -219,26 +246,39 @@
      */
     Watcher.prototype.update = function () {
 
-        var attrList = this.vmAttr.split("&");
-
-        var vmValue = this.vm.getDeepValue(attrList);
-
+        //  获取vue实例的值
+        var vmValue = this.vm.getDeepValOrObj(this.vmAttr, "val");
+        //  绑定的DOM的值进行更新
         this.el[this.elAttr] = vmValue;
 
     }
 
     /**
-     * 获取深层数据
-     * @param {Array} attrList 属性列表
+     * 根据属性名称进行切割，获取最深属性值 或者 最深属性所属对象 和 最深属性名称
+     * @param {string} attrList 属性列表
      */
-    FakeVue.prototype.getDeepValue = function (attrList) {
-        var answer = this.$data;
-        for (var i in attrList) {
-            answer = answer[attrList[i]];
-        }
-        return answer;
-    }
+    FakeVue.prototype.getDeepValOrObj = function (attrList, type) {
+        //  默认取实例数据
+        var obj = this.$data;
+        //  默认属性名称
+        var attr = "";
+        //  切割属性列表
+        attrList = attrList.split("&");
 
+        attrList.forEach(function (item, index) {
+            if (type == "val") {
+                obj = obj[item];
+            } else {
+                if (index != attrList.length - 1) {
+                    obj = obj[item];
+                } else {
+                    attr = item;
+                }
+            }
+        });
+        return attr ? { obj: obj, attr: attr } : obj;
+
+    }
 
     window.FakeVue = FakeVue;
 

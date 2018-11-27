@@ -30,32 +30,42 @@
 
         <form>
             <input type="text" v-model="people.goods.id">
+            <button type="button" v-click="increment2">增加</button>
         </form>
-        <h3 v-bind="people.goods.id"></h3>
+
+        <form>
+            <div v-for="item in list">
+                {{ item }}
+            </div>
+        </form>
 
     </div>
 </body>
 <script src="./fake-vue.js"></script>
 <script>
-    
+
     window.onload = function () {
         window.app = new FakeVue({
             el: '#app',
             data: {
                 number: 0,
+                list: [1, 2, 3],
                 people: {
-                    name : "august",
-                    info : {
-                        age : 18
+                    name: "august",
+                    info: {
+                        age: 18
                     },
-                    goods : {
-                        id : 1
+                    goods: {
+                        id: 1
                     }
                 }
             },
             methods: {
                 increment: function () {
                     this.number++;
+                },
+                increment2: function(){
+                    this.people.goods.id++;
                 }
             }
         });
