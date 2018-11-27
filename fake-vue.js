@@ -141,6 +141,12 @@
                 that.directiveBind(node);
 
             }
+
+            if (node.hasAttribute('v-for')) {
+
+                that.directiveFor(node);
+
+            }
         }
     }
 
@@ -214,6 +220,23 @@
         var attrVal = this.replaceUnderLine(node.getAttribute('v-bind'));
 
         this.binding[attrVal].directives.push(new Watcher(node, 'innerHTML', this, attrVal));
+    }
+
+    /**
+     * 模板指令，v-for
+     */
+    FakeVue.prototype.directiveFor = function (node) {
+        
+        /**
+         * (item, index) in list
+         * (item) in list
+         * item in list
+         */
+        var template = node.getAttribute('v-for');
+
+        var templateList = template.split("in");
+
+        
     }
 
     /**
