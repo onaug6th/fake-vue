@@ -3,10 +3,19 @@
  * @description 模仿Vue实现的假Vue
  */
 
-; (function (window, document) {
+; (function (global, factory) {
+    //  es6 module
+    typeof exports === 'object' && typeof module !== 'undefined'
+        ?
+        //  处于es6 module时，导出函数
+        module.exports = factory() :
+        //  amd，cmd
+        typeof define === 'function' && define.amd ? define(factory) :
+            //  否则挂载到window或global
+            (global.FakeVue = factory());
+}(this, (function () {
 
     /**
-     * 构造函数
      * 请查阅vue文档，传个正儿八经的配置进来
      * @param {*} options 配置
      */
@@ -101,7 +110,7 @@
 
     /**
      * 递归寻找符合指令要求的dom绑定模版语法
-     * @param {HTMLElement} root 遍历的根dom
+     * @param {Element} root 遍历的根dom
      */
     FakeVue.prototype.complie = function (root) {
 
@@ -142,6 +151,7 @@
 
             }
 
+            //  v-for
             if (node.hasAttribute('v-for')) {
 
                 that.directiveFor(node);
@@ -154,7 +164,7 @@
      * 模板指令，v-click
      * v-click：
      * 1. 给需要绑定的节点，添加点击事件。在点击时执行绑定的回调
-     * @param {HTMLElement} node 解析的DOM节点
+     * @param {Element} node 解析的DOM节点
      */
     FakeVue.prototype.directiveClick = function (node) {
 
@@ -179,7 +189,7 @@
      * v-mode:
      * 1. 给绑定的属性，添加模板更新队列方法。
      * 2. 给模板添加事件，当模板输入时，更新绑定的属性值
-     * @param {HTMLElement} node 解析的DOM节点
+     * @param {Element} node 解析的DOM节点
      */
     FakeVue.prototype.directiveModel = function (node) {
 
@@ -213,7 +223,7 @@
      * 模板指令，v-bind
      * v-bind：
      * 1. 仅仅是给绑定的属性添加一个更新队列方法
-     * @param {HTMLElement} node 解析的DOM节点
+     * @param {Element} node 解析的DOM节点
      */
     FakeVue.prototype.directiveBind = function (node) {
 
@@ -224,9 +234,12 @@
 
     /**
      * 模板指令，v-for
+     * @param {Element} node 解析的DOM节点
      */
     FakeVue.prototype.directiveFor = function (node) {
-        
+
+        var that = this;
+
         /**
          * (item, index) in list
          * (item) in list
@@ -234,9 +247,31 @@
          */
         var template = node.getAttribute('v-for');
 
-        var templateList = template.split("in");
+        var templateList = template.split(/\bin\b/);
 
-        
+        if (templateList.length !== 2) {
+            console.error("en : your v-for directive not correct.");
+            console.error("zh : 你的v-for指令写错了。");
+        } else {
+
+            var forItem = templateList[0].trim();
+            var forList = templateList[1].trim();
+
+            forItem = forItem.replace("(", "").replace(")", "").split(",");
+
+            forList = that.getDeepValOrObj("list", "val");
+
+            var listHtml = "";
+
+            forList.forEach(function (row, i) {
+                document.createElement()
+                node.insertBefore()
+            });
+
+
+            debugger;
+        }
+
     }
 
     /**
@@ -249,7 +284,7 @@
 
     /**
      * 负责更新视图的观察者对象
-     * @param {HTMLElement} el    指令对应的DOM元素
+     * @param {Element} el    指令对应的DOM元素
      * @param {string} elAttr  绑定的属性值，例如 "value，innerHTML"
      * @param {object} vm    指令所属FakeVue实例
      * @param {string} vmAttr   指令对应在data的值，例如 "number，name"
@@ -304,6 +339,5 @@
 
     }
 
-    window.FakeVue = FakeVue;
-
-})(window, window.document);
+    return FakeVue;
+})));
