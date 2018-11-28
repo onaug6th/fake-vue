@@ -241,35 +241,53 @@
         var that = this;
 
         /**
+         * 指令值
          * (item, index) in list
          * (item) in list
          * item in list
          */
-        var template = node.getAttribute('v-for');
+        var directiveAttr = node.getAttribute('v-for');
 
-        var templateList = template.split(/\bin\b/);
+        //  指令块，以 in 关键字进行分割
+        var directiveBlock = directiveAttr.split(/\bin\b/);
 
-        if (templateList.length !== 2) {
+        if (directiveBlock.length !== 2) {
             console.error("en : your v-for directive not correct.");
             console.error("zh : 你的v-for指令写错了。");
         } else {
 
-            var forItem = templateList[0].trim();
-            var forList = templateList[1].trim();
+            //  当前循环对象
+            var forItem = directiveBlock[0].trim().replace("(", "").replace(")", "").split(",");
+            //  循环目标
+            var forList = that.getDeepValOrObj(directiveBlock[1].trim(), "val");
 
-            forItem = forItem.replace("(", "").replace(")", "").split(",");
+            //  移除 v-for 属性，防止复读机
+            node.removeAttribute("v-for");
 
-            forList = that.getDeepValOrObj("list", "val");
+            //  当前v-for标签所属父节点
+            var parentElement = node.parentElement || node.parentNode;
 
-            var listHtml = "";
+            //  当前v-for标签的所有属性
+            var nodeAttrs = [].slice.call(node.attributes);
 
+            //  循环目标循环
             forList.forEach(function (row, i) {
-                document.createElement()
-                node.insertBefore()
+
+                var element = document.createElement(node.tagName);
+
+                nodeAttrs.forEach(function (attr) {
+                    element.setAttribute(attr.name, attr.value);
+                });
+
+                element.innerHTML = node.innerHTML;
+
+                parentElement.insertBefore(element, node);
+                
             });
 
+            //  移除v-for标签
+            node.remove();
 
-            debugger;
         }
 
     }
