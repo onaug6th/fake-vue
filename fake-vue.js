@@ -279,7 +279,11 @@
                     element.setAttribute(attr.name, attr.value);
                 });
 
-                element.innerHTML = node.innerHTML;
+                var result = /{{(\w+)}}/.exec(node.innerHTML);
+                
+                var html = node.innerHTML.replace(result[0], row);
+
+                element.innerHTML = html;
 
                 parentElement.insertBefore(element, node);
                 
@@ -289,6 +293,10 @@
             node.remove();
 
         }
+
+    }
+
+    FakeVue.prototype.regexHtml = function(html, data){
 
     }
 
