@@ -279,7 +279,9 @@
                     element.setAttribute(attr.name, attr.value);
                 });
 
-                var result = /{{(\w+)}}/.exec(node.innerHTML);
+                var regex = new RegExp('{{' + forItem[0] + '}}');
+
+                var result = regex.exec(node.innerHTML);
                 
                 var html = node.innerHTML.replace(result[0], row);
 
